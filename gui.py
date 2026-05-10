@@ -1,4 +1,8 @@
-"""Tkinter UI for the media tracker."""
+"""Tkinter UI for the media tracker.
+
+This module implements the graphical user interface, handling user interactions,
+form input, table displays, and wiring these to the underlying database operations.
+"""
 
 from __future__ import annotations
 
@@ -11,6 +15,13 @@ from models import MEDIA_TYPES, STATUSES, MediaRow
 
 
 class MediaTrackerApp(tk.Tk):
+    """
+    Main application window for the Personal Movies & Shows tracker.
+
+    This class manages the window lifecycle, UI layout, styling, and event
+    handling for creating, reading, updating, and deleting media records.
+    """
+
     def __init__(self, db: Database | None = None) -> None:
         super().__init__()
         self.db = db or Database()
@@ -31,6 +42,7 @@ class MediaTrackerApp(tk.Tk):
         self._refresh_table()
 
     def _setup_styles(self) -> None:
+        """configures the ttk Styles and theme for a modern, card-based look."""
         style = ttk.Style(self)
         try:
             style.theme_use("clam")
@@ -102,12 +114,23 @@ class MediaTrackerApp(tk.Tk):
         )
 
     def _card(self, parent: tk.Widget, **grid_kw) -> ttk.Frame:
+        """
+        Helper to create a styled frame that looks like a card.
+
+        Args:
+            parent (tk.Widget): The widget to place the card in.
+            **grid_kw: Grid configuration parameters for the card's placement.
+
+        Returns:
+            ttk.Frame: The created card frame.
+        """
         frame = ttk.Frame(parent, style="Card.TFrame", padding=16)
         frame.grid(**grid_kw)
         frame.columnconfigure(1, weight=1)
         return frame
 
     def _build_ui(self) -> None:
+        """Sets up the main window layout, including the header, form, and library table."""
         outer = tk.Frame(self, bg=COLORS["bg"], padx=20, pady=16)
         outer.pack(fill=tk.BOTH, expand=True)
 
@@ -152,6 +175,12 @@ class MediaTrackerApp(tk.Tk):
         status.pack(fill=tk.X, pady=(12, 0))
 
     def _build_form(self, parent: ttk.Frame) -> None:
+        """
+        Creates the input form for adding or editing media entries.
+
+        Args:
+            parent (ttk.Frame): The frame where the form will be placed.
+        """
         ttk.Label(parent, text="Add or edit", style="Header.TLabel").grid(
             row=0, column=0, columnspan=2, sticky=tk.W, pady=(0, 4)
         )
@@ -198,7 +227,9 @@ class MediaTrackerApp(tk.Tk):
         )
 
         row += 1
-        ttk.Label(parent, text="Rating (0–10)").grid(row=row, column=0, sticky=tk.W, pady=4)
+        ttk.Label(parent, text="Rating (0–10)").grid(
+            row=row, column=0, sticky=tk.W, pady=4
+        )
         self.var_rating = tk.StringVar()
         ttk.Entry(parent, textvariable=self.var_rating, width=28).grid(
             row=row, column=1, sticky="ew", pady=4
@@ -226,14 +257,20 @@ class MediaTrackerApp(tk.Tk):
         row += 1
         btn_row = ttk.Frame(parent, style="Card.TFrame")
         btn_row.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(16, 0))
-        ttk.Button(btn_row, text="Save", style="Accent.TButton", command=self._on_save).pack(
-            side=tk.LEFT, padx=(0, 8)
-        )
-        ttk.Button(btn_row, text="Clear form", style="Ghost.TButton", command=self._on_clear).pack(
-            side=tk.LEFT
-        )
+        ttk.Button(
+            btn_row, text="Save", style="Accent.TButton", command=self._on_save
+        ).pack(side=tk.LEFT, padx=(0, 8))
+        ttk.Button(
+            btn_row, text="Clear form", style="Ghost.TButton", command=self._on_clear
+        ).pack(side=tk.LEFT)
 
     def _build_list(self, parent: ttk.Frame) -> None:
+        """
+        Creates the library table view and search functionality.
+
+        Args:
+            parent (ttk.Frame): The frame where the list will be placed.
+        """
         ttk.Label(parent, text="Library", style="Header.TLabel").grid(
             row=0, column=0, columnspan=3, sticky=tk.W, pady=(0, 4)
         )
@@ -241,11 +278,15 @@ class MediaTrackerApp(tk.Tk):
         search_row = ttk.Frame(parent, style="Card.TFrame")
         search_row.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(0, 8))
         search_row.columnconfigure(1, weight=1)
-        ttk.Label(search_row, text="Search").grid(row=0, column=0, sticky=tk.W, padx=(0, 8))
+        ttk.Label(search_row, text="Search").grid(
+            row=0, column=0, sticky=tk.W, padx=(0, 8)
+        )
         self.var_search = tk.StringVar()
         ent = ttk.Entry(search_row, textvariable=self.var_search)
         ent.grid(row=0, column=1, sticky="ew")
-        self.var_search.trace_add("write", lambda *_: self.after_idle(self._refresh_table))
+        self.var_search.trace_add(
+            "write", lambda *_: self.after_idle(self._refresh_table)
+        )
 
         tree_frame = ttk.Frame(parent, style="Card.TFrame")
         tree_frame.grid(row=2, column=0, columnspan=3, sticky="nsew")
@@ -265,7 +306,9 @@ class MediaTrackerApp(tk.Tk):
         )
         for c, h, w in zip(cols, headings, widths):
             self.tree.heading(c, text=h)
-            self.tree.column(c, width=w, anchor=tk.W if c != "year" and c != "rating" else tk.CENTER)
+            self.tree.column(
+                c, width=w, anchor=tk.W if c != "year" and c != "rating" else tk.CENTER
+            )
 
         vsb = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=vsb.set)
@@ -279,11 +322,15 @@ class MediaTrackerApp(tk.Tk):
 
         btn_bar = ttk.Frame(parent, style="Card.TFrame")
         btn_bar.grid(row=3, column=0, columnspan=3, sticky="ew", pady=(10, 0))
-        ttk.Button(btn_bar, text="Delete selected", style="Ghost.TButton", command=self._on_delete).pack(
-            side=tk.LEFT
-        )
+        ttk.Button(
+            btn_bar,
+            text="Delete selected",
+            style="Ghost.TButton",
+            command=self._on_delete,
+        ).pack(side=tk.LEFT)
 
     def _parse_optional_int(self, raw: str) -> int | None:
+        """Helper to convert potential integer input to int or None."""
         raw = raw.strip()
         if not raw:
             return None
@@ -293,6 +340,7 @@ class MediaTrackerApp(tk.Tk):
             raise ValueError("Year must be a whole number or empty.")
 
     def _parse_optional_float(self, raw: str) -> float | None:
+        """Helper to convert potential float input to float or None."""
         raw = raw.strip()
         if not raw:
             return None
@@ -302,6 +350,7 @@ class MediaTrackerApp(tk.Tk):
             raise ValueError("Rating must be a number between 0 and 10 or empty.")
 
     def _form_to_row(self) -> MediaRow:
+        """Extracts values from UI variables and returns a MediaRow dataclass."""
         year = self._parse_optional_int(self.var_year.get())
         rating = self._parse_optional_float(self.var_rating.get())
         return MediaRow(
@@ -315,6 +364,7 @@ class MediaTrackerApp(tk.Tk):
         )
 
     def _on_save(self) -> None:
+        """Handles the 'Save' button click: validates, then inserts or updates the record."""
         try:
             row = self._form_to_row()
         except ValueError as e:
@@ -348,6 +398,7 @@ class MediaTrackerApp(tk.Tk):
         self._select_row_by_id(self._current_id)
 
     def _on_clear(self) -> None:
+        """Resets the input form and clears the current selection."""
         self._current_id = None
         self.var_title.set("")
         self.var_type.set(MEDIA_TYPES[0])
@@ -359,6 +410,7 @@ class MediaTrackerApp(tk.Tk):
         self.status_var.set("New entry - fill the form and click Save.")
 
     def _on_delete(self) -> None:
+        """Handles the 'Delete selected' button: confirms and removes the record from the DB."""
         sel = self.tree.selection()
         if not sel:
             messagebox.showinfo("Delete", "Select a row first.")
@@ -371,7 +423,9 @@ class MediaTrackerApp(tk.Tk):
         except ValueError:
             messagebox.showerror("Delete", "Could not resolve row id.")
             return
-        if not messagebox.askyesno("Confirm delete", f'Remove "{title}" from your library?'):
+        if not messagebox.askyesno(
+            "Confirm delete", f'Remove "{title}" from your library?'
+        ):
             return
         try:
             self.db.delete(row_id)
@@ -383,6 +437,7 @@ class MediaTrackerApp(tk.Tk):
         self.status_var.set(f'Deleted "{title}".')
 
     def _refresh_table(self) -> None:
+        """Queries the database and re-populates the Treeview with matching records."""
         search = self.var_search.get()
         rows = self.db.list_all(search)
         self.tree.delete(*self.tree.get_children())
@@ -398,9 +453,11 @@ class MediaTrackerApp(tk.Tk):
             )
 
     def _on_tree_select(self, _event=None) -> None:
+        """Event handler for row selection changes in the Treeview."""
         self._load_selection_into_form()
 
     def _load_selection_into_form(self) -> None:
+        """Loads the data from the selected row into the input form fields."""
         sel = self.tree.selection()
         if not sel:
             return
@@ -424,12 +481,14 @@ class MediaTrackerApp(tk.Tk):
         self.status_var.set(f"Editing: {title}")
 
     def _fetch_notes(self, row_id: int) -> str:
+        """Fetches notes for a specific record directly from the database."""
         with self.db.connect() as conn:
             cur = conn.execute("SELECT notes FROM media WHERE id = ?", (row_id,))
             one = cur.fetchone()
         return (one["notes"] or "") if one else ""
 
     def _select_row_by_id(self, row_id: int | None) -> None:
+        """Sets the selection in the Treeview to match a specific database row ID."""
         if row_id is None:
             return
         iid = str(row_id)
@@ -437,7 +496,7 @@ class MediaTrackerApp(tk.Tk):
             self.tree.selection_set(iid)
             self.tree.see(iid)
 
-
-def run_app() -> None:
-    app = MediaTrackerApp()
-    app.mainloop()
+    def run_app(self) -> None:
+        """Starts the Tkinter main loop."""
+        app = MediaTrackerApp()
+        app.mainloop()

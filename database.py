@@ -1,4 +1,8 @@
-"""SQLite persistence for media entries."""
+"""SQLite persistence for media entries.
+
+This module handles all direct interactions with the SQLite database, including
+schema initialization, CRUD operations, and data validation for media records.
+"""
 
 from __future__ import annotations
 
@@ -12,20 +16,35 @@ from models import MEDIA_TYPES, STATUSES, MediaRow
 
 
 def _utc_now_iso() -> str:
+    """Returns the current UTC time in ISO 8601 format."""
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
 class Database:
+    """
+    Handles database connectivity and operations for the media tracker.
+
+    Attributes:
+        _path (Path): The filesystem path to the SQLite database file.
+    """
     def __init__(self, path: Path | None = None) -> None:
         self._path = path or DB_PATH
 
     def connect(self) -> sqlite3.Connection:
+        """
+        Creates and returns a connection to the SQLite database.
+        Configures row_factory to sqlite3.Row for named column access.
+        """
         conn = sqlite3.connect(self._path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
 
     def init_schema(self) -> None:
+        """
+        Initializes the database schema, creating the 'media' table
+        and necessary indexes if they do not already exist.
+        """
         with self.connect() as conn:
             conn.execute(
                 """
@@ -52,6 +71,15 @@ class Database:
             )
 
     def list_all(self, search: str | None = None) -> list[MediaRow]:
+        """
+        Retrieves a list of all media entries, optionally filtered by search term.
+
+        Args:
+            search (str | None): A substring to match against title or notes.
+
+        Returns:
+            list[MediaRow]: A list of matching MediaRow objects.
+        """
         sql = """
             SELECT id, title, media_type, status, year, rating, notes
             FROM media
@@ -67,6 +95,15 @@ class Database:
         return [_row_to_media(r) for r in rows]
 
     def insert(self, row: MediaRow) -> int:
+        """
+        Inserts a new media record into the database.
+
+        Args:
+            row (MediaRow): The data to insert.
+
+        Returns:
+            int: The ID of the newly created row.
+        """
         now = _utc_now_iso()
         with self.connect() as conn:
             cur = conn.execute(
@@ -90,6 +127,13 @@ class Database:
             return int(cur.lastrowid)
 
     def update(self, row_id: int, row: MediaRow) -> None:
+        """
+        Updates an existing media record.
+
+        Args:
+            row_id (int): The ID of the row to update.
+            row (MediaRow): The updated data.
+        """
         now = _utc_now_iso()
         with self.connect() as conn:
             conn.execute(
@@ -112,11 +156,18 @@ class Database:
             )
 
     def delete(self, row_id: int) -> None:
+        """
+        Deletes a media record from the database.
+
+        Args:
+            row_id (int): The ID of the row to remove.
+        """
         with self.connect() as conn:
             conn.execute("DELETE FROM media WHERE id = ?", (row_id,))
 
 
 def _row_to_media(row: sqlite3.Row) -> MediaRow:
+    """Maps a sqlite3.Row to a MediaRow dataclass."""
     return MediaRow(
         id=row["id"],
         title=row["title"],
@@ -135,6 +186,19 @@ def validate_media_row(
     year: Optional[int],
     rating: Optional[float],
 ) -> tuple[bool, str]:
+    """
+    Validates the input fields for a media entry before database insertion.
+
+    Args:
+        title (str): The entry title.
+        media_type (str): The type of media.
+        status (str): The watch status.
+        year (Optional[int]): Release year.
+        rating (Optional[float]): Numerical rating.
+
+    Returns:
+        tuple[bool, str]: (True, "") if valid, otherwise (False, "Error message").
+    """
     if not title or not title.strip():
         return False, "Title is required."
     if media_type not in MEDIA_TYPES:
@@ -146,3 +210,4 @@ def validate_media_row(
     if rating is not None and (rating < 0 or rating > 10):
         return False, "Rating must be between 0 and 10."
     return True, ""
+
