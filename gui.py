@@ -122,7 +122,7 @@ class MediaTrackerApp(tk.Tk):
         ).pack(anchor=tk.W)
         tk.Label(
             header,
-            text="Track movies and TV shows — search, add, edit, and delete entries.",
+            text="Track movies and TV shows - search, add, edit, and delete entries.",
             font=self._font_small,
             fg=COLORS["muted"],
             bg=COLORS["bg"],
@@ -356,7 +356,7 @@ class MediaTrackerApp(tk.Tk):
         self.var_rating.set("")
         self.txt_notes.delete("1.0", tk.END)
         self.tree.selection_remove(self.tree.selection())
-        self.status_var.set("New entry — fill the form and click Save.")
+        self.status_var.set("New entry - fill the form and click Save.")
 
     def _on_delete(self) -> None:
         sel = self.tree.selection()
