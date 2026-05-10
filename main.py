@@ -1,5 +1,5 @@
 """
-Personal Movies & Shows tracker — Tkinter + SQLite.
+Personal Movies & Shows tracker - Tkinter + SQLite.
 """
 
 import tkinter as tk
@@ -69,7 +69,7 @@ class MovieTrackerApp(tk.Tk):
         """Create labels, entries, the tree (table), and hook up button commands."""
         top = ttk.Label(
             self,
-            text="Track movies and TV — add rows, click one to edit, or delete.",
+            text="Track movies and TV - add rows, click one to edit, or delete.",
             padding=(10, 8),
         )
         top.pack(fill=tk.X)
@@ -228,7 +228,7 @@ class MovieTrackerApp(tk.Tk):
         self.var_status_msg.set("Editing row id %s" % self.current_id)
 
     def on_clear(self):
-        """Blank the form and stop pointing at an old id — next Save inserts a new row."""
+        """Blank the form and stop pointing at an old id - next Save inserts a new row."""
         self.current_id = None
         self.var_title.set("")
         self.var_type.set(db.TYPES[0])

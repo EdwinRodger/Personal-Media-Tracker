@@ -8,7 +8,7 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Same folder as this script — keeps the project portable for a small assignment
+# Same folder as this script - keeps the project portable for a small assignment
 DB_PATH = Path(__file__).resolve().parent / "media_tracker.db"
 
 # These strings must match what the CREATE TABLE check allows
@@ -36,7 +36,7 @@ def init_db():
     """
     Make sure the table exists.
 
-    Safe to call every time the app starts — it uses IF NOT EXISTS.
+    Safe to call every time the app starts - it uses IF NOT EXISTS.
     """
     with get_connection() as conn:
         conn.execute(
